@@ -33,3 +33,5 @@ dialog.document-dialog{width:min(1120px,calc(100vw - 24px));height:94dvh;max-hei
 /* Keep the selected tag visible while updating the existing list. */
 #tag-filter{position:sticky;top:12px;z-index:8}.active-tag-filter{box-shadow:0 3px 14px #234a3312}.active-tag-filter>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.tag-result-status{color:#3d6350;font-size:12px}.active-tag-filter .text-btn{white-space:nowrap}.cards[aria-busy="true"]{opacity:.65;transition:opacity .15s}.document-dialog .pdf-preview{height:66dvh;display:block}
 @media(max-width:640px){#tag-filter{top:73px}.active-tag-filter>div{gap:4px 10px}.document-dialog .pdf-preview{height:62dvh}}
+
+.content{overflow-anchor:none}
