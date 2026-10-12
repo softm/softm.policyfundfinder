@@ -10,6 +10,7 @@ import {completeIndex,searchCatalog} from '../public/static-search.js';
 import {exportCatalog,verifyCatalog} from '../scripts/static-catalog.mjs';
 import {collectNpay} from '../scripts/collect-pages.mjs';
 import {createDialogLayers} from '../public/dialog-layers.js';
+import {metricFilters,filterChips} from '../public/search-controls.js';
 const notice=(id,title,extra={})=>({id,title,fullTitle:title,category:'기술',subcategory:'장비지원',region:'충남',regions:['충남'],regionSoft:true,type:'지원사업',purpose:'기타',agency:'기관',summary:'스마트팜 장비',target:'농업인',published:'2026-10-01',start:null,end:'2026-10-20',sourceActive:true,sourceProvider:'npay',sourceUrl:'https://example.com/'+id,tags:[],industries:[],businessKinds:[],requirements:[],documents:[],attachments:[],checkedAt:'2026-10-12',imported:true,detailAvailable:true,...extra});
 test('static search preserves category facets, status, Korean region and profile filters',()=>{
   const rows=[notice('a','충남 장비'),notice('b','서울 장비',{region:'서울',regions:['서울']}),notice('c','지난 금융',{category:'금융',sourceActive:false})].map(completeIndex);
@@ -17,6 +18,32 @@ test('static search preserves category facets, status, Korean region and profile
   assert.equal(result.total,1);assert.equal(result.programs[0].id,'a');assert.equal(result.page,1);assert.equal(result.categoryCounts.기술,1);
   assert.equal(searchCatalog(rows,{status:'all'},'2026-10-12').total,3);
   assert.equal(searchCatalog(rows,{status:'closed'},'2026-10-12').total,1);
+});
+test('metric shortcuts query the same scope as the displayed counts and clear unrelated filters',()=>{
+  const rows=[
+    notice('today','오늘 마감',{end:'2026-10-12',category:'금융',type:'정책융자'}),
+    notice('seven','7일 후 마감',{end:'2026-10-19',category:'금융',region:'서울'}),
+    notice('eight','8일 후 마감',{end:'2026-10-20',category:'금융',type:'바우처'}),
+    notice('old','지난 금융',{end:'2026-10-11',category:'금융'}),
+    notice('future','접수 예정',{start:'2026-10-15',end:'2026-10-18',category:'기술'}),
+    notice('loan','기술 사업 대출',{category:'기술',type:'정책융자'}),
+  ].map(completeIndex);
+  const stats=searchCatalog(rows,{filters:metricFilters('all')},'2026-10-12');
+  assert.equal(stats.urgent,2);assert.equal(stats.financial,3);
+  const previous={region:'충남',query:'다른 검색어',tag:'서울',category:'기술',subcategory:'장비지원',type:'지원금',purpose:'시설·장비',matched:true};
+  for(const key of ['all','urgent','financial']){
+    const filters={...previous,...metricFilters(key)},result=searchCatalog(rows,{filters},'2026-10-12');
+    assert.equal(result.total,key==='all'?stats.sourceCount:stats[key]);
+    assert.equal(filters.region,'전체');assert.equal(filters.query,'');assert.equal(filters.tag,'');assert.equal(filters.matched,false);
+  }
+  assert.equal(metricFilters('financial').category,'금융');assert.equal(metricFilters('financial').type,'전체');
+  assert.equal(metricFilters('urgent').sort,'deadline');assert.throws(()=>metricFilters('invalid'));
+});
+test('applied condition summary identifies status, category, query, tag and profile conditions',()=>{
+  const filters={...metricFilters('financial'),region:'충남',status:'urgent',query:'  스마트팜  ',tag:'#기술',matched:true};
+  const chips=filterChips(filters);
+  assert.deepEqual(chips.map(c=>[c.key,c.value]),[['region','충남'],['category','금융'],['status','7일 내 마감'],['query','스마트팜'],['tag','#기술'],['matched','조건 불일치 제외']]);
+  assert.deepEqual(filterChips(metricFilters('all')).map(c=>c.value),['전체·지난 공고']);
 });
 test('complete snapshot serves search, canonical aliases, archive and PDF without server calls',async()=>{
   const dir=await mkdtemp(join(tmpdir(),'pages-catalog-')),root=join(dir,'data');
