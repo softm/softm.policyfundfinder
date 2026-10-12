@@ -9,7 +9,7 @@ https://github.com/softm/softm.policyfundfinder/settings/pages
 - HTTPS 인증이 완료되면 Enforce HTTPS 사용
 - DNS의 `policyfundfinder` CNAME 대상은 **softm.github.io**입니다. 기존 연결이 이 값이면 유지합니다. ChatGPT Sites용 `custom-domains.chatgpt.site`를 Pages용 DNS 대상으로 사용하지 않습니다.
 
-기존 브랜치 기반 Pages 게시를 유지한 상태에서도 루트 `index.html`이 `public/`의 실제 앱으로 이동합니다. 사용자 정의 Actions 배포는 `_site/`를 도메인 루트에 게시합니다. CNAME 파일만으로 사용자 정의 Actions의 도메인 설정이 바뀌지는 않으므로 Pages 설정 화면의 도메인을 보존합니다.
+기존 브랜치 기반 Pages 게시에서도 루트 `index.html`이 실제 앱 화면을 직접 표시합니다. 정적 리소스는 `public/`에서 읽으며 브라우저 주소는 도메인 루트에 유지됩니다. 이전 `/public/` 링크는 검색 조건과 공고 ID를 보존해 루트로 이동합니다. 사용자 정의 Actions 배포는 `_site/`를 도메인 루트에 게시합니다. CNAME 파일만으로 사용자 정의 Actions의 도메인 설정이 바뀌지는 않으므로 Pages 설정 화면의 도메인을 보존합니다.
 
 ## 기업마당 인증키
 

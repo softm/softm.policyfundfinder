@@ -3,6 +3,7 @@ import {join} from 'node:path';
 import {verifyCatalog} from './static-catalog.mjs';
 const out='_site';await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});await cp('public',out,{recursive:true});
 try{await cp('.work/data',join(out,'data'),{recursive:true,force:true});}catch(error){if(error.code!=='ENOENT')throw error;}
+const rootHtml=await readFile('index.html','utf8');await writeFile(join(out,'index.html'),rootHtml.replaceAll('./public/','./'));
 await cp('CNAME',join(out,'CNAME'));await writeFile(join(out,'.nojekyll'),'');
 // Preserve links opened while the repository used branch-based /public/ hosting.
 await mkdir(join(out,'public'),{recursive:true});await writeFile(join(out,'public','index.html'),'<!doctype html><html lang="ko"><meta charset="utf-8"><title>지원한눈</title><script>const u=new URL("../",location.href);u.search=location.search;u.hash=location.hash;location.replace(u.href);</script><a href="../">지원한눈 열기</a></html>');
