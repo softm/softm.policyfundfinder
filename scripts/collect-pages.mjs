@@ -5,6 +5,7 @@ import {normalizeNpay,publicRead,titleKey} from '../server/catalog.mjs';
 import {collectAll} from '../server/bizinfo.mjs';
 import {koreanDate,deadline} from '../public/core.js';
 import {readSnapshot,readJsonGzip,writeJsonGzip,exportCatalog,digest} from './static-catalog.mjs';
+import {enrichAttachmentViews} from './enrich-attachments.mjs';
 
 export async function retry(operation,attempts=3){let error;for(let n=0;n<attempts;n++){try{return await operation();}catch(e){error=e;if(n+1<attempts)await new Promise(resolve=>setTimeout(resolve,1000*(n+1)));}}throw error;}
 async function concurrent(items,limit,fn){let next=0;await Promise.all(Array.from({length:Math.min(limit,items.length)},async()=>{while(next<items.length){const index=next++;await fn(items[index],index);}}));}
@@ -50,6 +51,9 @@ export async function collectPages({key=process.env.BIZINFO_API_KEY,root='.work/
   for(const p of all)for(const f of p.attachments||[]){const name=digest(f.url)+'.pdf';try{await stat(join(pdfRoot,name));f.cachedUrl='data/pdf/'+name;}catch{delete f.cachedUrl;}}
   const completed=new Date().toISOString();
   const manifest=await exportCatalog(root,{npay,bizinfo,previous:previous.programs,expected,expectedActive,completed,bizinfoLastSuccess,bizinfoError,pdfCount:(await readdir(pdfRoot)).filter(x=>x.endsWith('.pdf')).length});
+  let oldViews={};if(previous.manifest.attachmentViews)try{oldViews=await readJsonGzip(join(previousRoot,'..',previous.manifest.attachmentViews));}catch{}
+  const attachmentViews=await enrichAttachmentViews(bizinfo,{previous:oldViews,limit:150});
+  const viewFile='attachment-views-'+Date.now()+'.json.gz';await writeJsonGzip(join(root,viewFile),attachmentViews);manifest.attachmentViews='data/'+viewFile;manifest.status.attachmentViewerCount=Object.values(attachmentViews).flat().filter(f=>f.viewerUrl).length;await writeFile(join(root,'manifest.json'),JSON.stringify(manifest));
   await mkdir(cacheRoot,{recursive:true});await rm(join(cacheRoot,'data'),{recursive:true,force:true});await cp(root,join(cacheRoot,'data'),{recursive:true,force:true});
   console.log('정적 공고 생성 완료',JSON.stringify({count:manifest.status.count,npaySourceCount:expected,npayActiveCount:expectedActive,detailCount:manifest.status.detailCount,pdfDownloaded:downloaded,completed}));return manifest;
 }

@@ -1,4 +1,5 @@
 import {regions} from '../public/data.js';
+import {normalizeAttachments} from '../public/attachment-links.js';
 export const API_URL='https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do';
 export function plain(value){
   return String(value??'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'').replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
@@ -16,7 +17,7 @@ export function noticeAttachments(row){
     const filename=plain(row[name])||kind;
     files.push({name:filename,url,kind,pdf:/\.pdf$/i.test(filename)});
   }
-  return files;
+  return normalizeAttachments(files);
 }
 function paragraphs(value){return String(value??'').replace(/<\/(?:p|div|li)>|<br\s*\/?\s*>/gi,'\n').split(/\r?\n/).map(plain).filter(Boolean).join('\n\n');}
 export function normalizeNotice(row,checkedAt){

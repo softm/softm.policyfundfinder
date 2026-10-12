@@ -1,5 +1,5 @@
-const CACHE='policyfundfinder-root-v2';
-const ASSETS=['./','./index.html','./public/styles.css','./public/app.js','./public/core.js','./public/data.js','./public/data-client.js','./public/notice-view.js','./public/static-client.js','./public/static-search.js','./public/search-worker.js','./public/icon.svg','./public/icon-192.png','./public/icon-512.png','./public/manifest.webmanifest'];
+const CACHE='policyfundfinder-root-v3';
+const ASSETS=['./','./index.html','./public/styles.css','./public/app.js','./public/core.js','./public/data.js','./public/data-client.js','./public/notice-view.js','./public/attachment-links.js','./public/tag-links.js','./public/static-client.js','./public/static-search.js','./public/search-worker.js','./public/icon.svg','./public/icon-192.png','./public/icon-512.png','./public/manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(event.request.method!=='GET'||u.origin!==self.location.origin||!ASSETS.some(p=>new URL(p,self.registration.scope).pathname===u.pathname))return;

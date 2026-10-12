@@ -32,6 +32,7 @@ export function match(p, profile, today = koreanDate()) {
 export function filterPrograms(programs, filters, profile, saved=[], today=koreanDate()) {
   let list=programs.filter(p=> {
     const d=deadline(p,today);
+    if(filters.tag&&!(p.tags||[]).some(tag=>normalizeTag(tag)===normalizeTag(filters.tag)))return false;
     if (filters.region && filters.region!=='전체' && p.region!=='전국' && !(p.regions||[p.region]).includes(filters.region) && (p.imported?p.region!=='지역 확인':!p.regionSoft)) return false;
     if (filters.type && filters.type!=='전체' && p.type!==filters.type) return false;
     if (filters.category && filters.category!=='전체' && categoryLabel(p)!==filters.category) return false;
@@ -57,6 +58,7 @@ export function filterPrograms(programs, filters, profile, saved=[], today=korea
   });
 }
 export function categoryLabel(p){return p.category?.trim()||'분류 미제공';}
+export function normalizeTag(value){return String(value||'').normalize('NFKC').replace(/^#+/,'').trim().toLocaleLowerCase('ko').slice(0,100);}
 export function categoryFacets(programs,filters,profile,saved=[],today=koreanDate()){
   const candidates=filterPrograms(programs,{...filters,category:'전체',subcategory:'전체'},profile,saved,today);
   const counts={전체:candidates.length},subcounts={};
