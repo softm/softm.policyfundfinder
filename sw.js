@@ -1,4 +1,4 @@
-const CACHE='policyfundfinder-root-v1';
+const CACHE='policyfundfinder-root-v2';
 const ASSETS=['./','./index.html','./public/styles.css','./public/app.js','./public/core.js','./public/data.js','./public/data-client.js','./public/notice-view.js','./public/static-client.js','./public/static-search.js','./public/search-worker.js','./public/icon.svg','./public/icon-192.png','./public/icon-512.png','./public/manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
