@@ -1,0 +1,15 @@
+.share-dialog{width:min(540px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid #cbd5e1;border-radius:18px;background:#fff;color:#172b3a;box-shadow:0 20px 70px #0f172a40;overflow:auto;overscroll-behavior:contain}
+.share-dialog::backdrop{background:#102d3b80}
+.share-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid #dce4e9;position:sticky;top:0;background:white;z-index:1}
+.share-header h2{font-size:20px;margin:0}.share-header button{min-width:44px;min-height:44px}
+.share-body{padding:20px 22px}.share-body p{line-height:1.65;margin:0 0 16px}
+#share-description{font-size:14px;color:#425363}.share-preview{padding:16px;background:#f1f7f5;border:1px solid #ceded8;border-radius:12px;margin:16px 0}
+#share-preview-title{font-size:16px;line-height:1.55;display:block;overflow-wrap:anywhere}
+#share-preview-text{white-space:pre-line;font-size:14px;color:#3a5260;margin:8px 0 0;max-height:180px;overflow:auto;overflow-wrap:anywhere}
+.share-url-label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
+#share-url{width:100%;box-sizing:border-box;min-height:46px;border:1px solid #91a8b6;border-radius:8px;padding:10px;background:#fff;color:#173f50;font-size:16px}
+.share-actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.share-actions .btn{flex:1 1 145px;min-height:46px;justify-content:center}.share-actions [hidden]{display:none!important}
+.share-body .share-hint{font-size:12px;color:#526675}.share-body #share-feedback{min-height:24px;margin:0;color:#076452;font-size:14px;font-weight:600}
+.share-dialog [aria-busy=true]{cursor:progress}.share-dialog button:focus-visible,.share-dialog input:focus-visible,[data-share-kind]:focus-visible{outline:3px solid #087d6b;outline-offset:3px}
+.share-app-button{white-space:nowrap;min-height:40px}.share-notice-button{min-width:40px;min-height:40px;flex-shrink:0}.share-search-button{margin-left:auto;white-space:nowrap}
+@media(max-width:600px){.share-body{padding:16px}.share-header{padding:12px 16px}.share-actions{gap:8px}.filter-panel-head{flex-wrap:wrap;gap:10px}.filter-panel-head>div:first-child{flex:1 1 100%}.share-search-button{margin-left:0}.mobile-header{gap:8px}.mobile-header .brand{margin-right:auto}.mobile-header .share-app-button{font-size:12px;gap:4px}.card-actions{gap:4px}}

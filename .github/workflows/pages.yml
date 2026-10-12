@@ -40,7 +40,7 @@ jobs:
           key: catalog-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: catalog-
       - name: Test static search and complete publication
-        run: node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs
+        run: node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs tests/sharing.test.mjs
       - name: Collect full catalog and active details
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh)
         env:
