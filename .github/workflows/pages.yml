@@ -1,0 +1,80 @@
+name: Collect notices and deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: Collect fresh public notices before deploying
+        type: boolean
+        default: true
+  schedule:
+    # 06:17 Asia/Seoul; avoid the busiest minute of the hour.
+    - cron: '17 21 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: policyfundfinder-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Restore last complete collection
+        uses: actions/cache/restore@v4
+        with:
+          path: .catalog-cache
+          key: catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: catalog-
+      - name: Test static search and complete publication
+        run: node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs
+      - name: Collect full catalog and active details
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh)
+        env:
+          BIZINFO_API_KEY: ${{ secrets.BIZINFO_API_KEY }}
+          DETAIL_LIMIT: '500'
+          PDF_LIMIT: '40'
+        run: node scripts/collect-pages.mjs
+      - name: Use last complete data on source-only deployments
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.refresh)
+        run: |
+          if [ -f .catalog-cache/data/manifest.json ]; then
+            mkdir -p .work
+            cp -R .catalog-cache/data .work/data
+          fi
+      - name: Build and verify all published files
+        run: node scripts/build-pages.mjs
+      - name: Preserve verified catalog for next collection
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh)
+        uses: actions/cache/save@v4
+        with:
+          path: .catalog-cache
+          key: catalog-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+          retention-days: 1
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy verified site
+        id: deployment
+        uses: actions/deploy-pages@v4

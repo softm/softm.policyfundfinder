@@ -46,7 +46,7 @@ export function filterPrograms(programs, filters, profile, saved=[], today=korea
     if (filters.view==='saved' && !saved.includes(p.id)) return false;
     if (filters.matched && profile && match(p,profile,today).fail.length) return false;
     const tokens=(filters.query||'').trim().toLocaleLowerCase('ko').split(/\s+/).filter(Boolean);
-    const hay=[p.title,p.fullTitle,p.summary,p.agency,p.region,p.city,p.category,p.subcategory,...p.tags,p.target].join(' ').toLocaleLowerCase('ko');
+    const hay=[p.title,p.fullTitle,p.summary,p.search,p.agency,p.region,p.city,p.category,p.subcategory,...p.tags,p.target].join(' ').toLocaleLowerCase('ko');
     return tokens.every(t=>hay.includes(t));
   });
   return list.sort((a,b)=> {
