@@ -26,6 +26,7 @@ test('Pages entry point publishes search metadata and crawler discovery files',a
     readFile(new URL('../google3963d25075aa9810.html',import.meta.url),'utf8'),
   ]);
   for(const expected of ['지원한눈','name="description"','name="keywords"','name="robots"','name="google-site-verification"','name="naver-site-verification"','rel="canonical"','property="og:title"','name="twitter:card"'])assert.match(html,new RegExp(expected));
+  assert.match(html,/https:\/\/policyfundfinder\.designboard\.net\/public\/icon-512\.png/);
   const structured=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert.ok(structured);
   const schema=JSON.parse(structured[1]);assert.equal(schema['@type'],'WebApplication');assert.equal(schema.name,'지원한눈');
   assert.match(redirect,/name="robots" content="noindex,follow"/);assert.match(redirect,/rel="canonical"/);
