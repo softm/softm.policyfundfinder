@@ -20,12 +20,18 @@ test('Pages entry point publishes search metadata and crawler discovery files',a
     readFile(new URL('../public/sitemap.xml',import.meta.url),'utf8'),
     readFile(new URL('../public/google3963d25075aa9810.html',import.meta.url),'utf8'),
   ]);
+  const [rootRobots,rootSitemap,rootGoogle]=await Promise.all([
+    readFile(new URL('../robots.txt',import.meta.url),'utf8'),
+    readFile(new URL('../sitemap.xml',import.meta.url),'utf8'),
+    readFile(new URL('../google3963d25075aa9810.html',import.meta.url),'utf8'),
+  ]);
   for(const expected of ['지원한눈','name="description"','name="keywords"','name="robots"','name="google-site-verification"','name="naver-site-verification"','rel="canonical"','property="og:title"','name="twitter:card"'])assert.match(html,new RegExp(expected));
   const structured=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert.ok(structured);
   const schema=JSON.parse(structured[1]);assert.equal(schema['@type'],'WebApplication');assert.equal(schema.name,'지원한눈');
   assert.match(redirect,/name="robots" content="noindex,follow"/);assert.match(redirect,/rel="canonical"/);
   assert.match(robots,/^User-agent: \*/m);assert.match(robots,/Sitemap: https:\/\/policyfundfinder\.designboard\.net\/sitemap\.xml/);
   assert.match(sitemap,/<loc>https:\/\/policyfundfinder\.designboard\.net\/<\/loc>/);assert.equal(google.trim(),'google-site-verification: google3963d25075aa9810.html');
+  assert.equal(rootRobots,robots);assert.equal(rootSitemap,sitemap);assert.equal(rootGoogle,google);
 });
 test('static search preserves category facets, status, Korean region and profile filters',()=>{
   const rows=[notice('a','충남 장비'),notice('b','서울 장비',{region:'서울',regions:['서울']}),notice('c','지난 금융',{category:'금융',sourceActive:false})].map(completeIndex);
