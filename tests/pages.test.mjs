@@ -12,6 +12,21 @@ import {collectNpay} from '../scripts/collect-pages.mjs';
 import {createDialogLayers} from '../public/dialog-layers.js';
 import {metricFilters,filterChips} from '../public/search-controls.js';
 const notice=(id,title,extra={})=>({id,title,fullTitle:title,category:'기술',subcategory:'장비지원',region:'충남',regions:['충남'],regionSoft:true,type:'지원사업',purpose:'기타',agency:'기관',summary:'스마트팜 장비',target:'농업인',published:'2026-10-01',start:null,end:'2026-10-20',sourceActive:true,sourceProvider:'npay',sourceUrl:'https://example.com/'+id,tags:[],industries:[],businessKinds:[],requirements:[],documents:[],attachments:[],checkedAt:'2026-10-12',imported:true,detailAvailable:true,...extra});
+test('Pages entry point publishes search metadata and crawler discovery files',async()=>{
+  const [html,redirect,robots,sitemap,google]=await Promise.all([
+    readFile(new URL('../index.html',import.meta.url),'utf8'),
+    readFile(new URL('../public/index.html',import.meta.url),'utf8'),
+    readFile(new URL('../public/robots.txt',import.meta.url),'utf8'),
+    readFile(new URL('../public/sitemap.xml',import.meta.url),'utf8'),
+    readFile(new URL('../public/google3963d25075aa9810.html',import.meta.url),'utf8'),
+  ]);
+  for(const expected of ['지원한눈','name="description"','name="keywords"','name="robots"','name="google-site-verification"','name="naver-site-verification"','rel="canonical"','property="og:title"','name="twitter:card"'])assert.match(html,new RegExp(expected));
+  const structured=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert.ok(structured);
+  const schema=JSON.parse(structured[1]);assert.equal(schema['@type'],'WebApplication');assert.equal(schema.name,'지원한눈');
+  assert.match(redirect,/name="robots" content="noindex,follow"/);assert.match(redirect,/rel="canonical"/);
+  assert.match(robots,/^User-agent: \*/m);assert.match(robots,/Sitemap: https:\/\/policyfundfinder\.designboard\.net\/sitemap\.xml/);
+  assert.match(sitemap,/<loc>https:\/\/policyfundfinder\.designboard\.net\/<\/loc>/);assert.equal(google.trim(),'google-site-verification: google3963d25075aa9810.html');
+});
 test('static search preserves category facets, status, Korean region and profile filters',()=>{
   const rows=[notice('a','충남 장비'),notice('b','서울 장비',{region:'서울',regions:['서울']}),notice('c','지난 금융',{category:'금융',sourceActive:false})].map(completeIndex);
   const result=searchCatalog(rows,{filters:{region:'충남',category:'기술',status:'current',query:'스마트팜',matched:true},profile:{region:'충남'},page:999,pageSize:1},'2026-10-12');
