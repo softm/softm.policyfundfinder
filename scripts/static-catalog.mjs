@@ -3,6 +3,7 @@ import {join} from 'node:path';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {titleKey} from '../server/catalog.mjs';
+import {classifyProgram} from '../public/notice-classification.js';
 import {shardFor} from '../public/static-search.js';
 
 export const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -27,7 +28,8 @@ function indexEntry(p){
 }
 export async function exportCatalog(root,{npay,bizinfo,previous=[],expected,expectedActive,completed,bizinfoLastSuccess,bizinfoError=null,pdfCount=0}){
   if(npay.length!==expected||new Set(npay.map(p=>p.id)).size!==expected)throw Error('원천 전체 건수 또는 고유 ID 건수가 다릅니다.');
-  const {programs,aliases,archive}=combinePrograms(npay,bizinfo,previous);
+  // Also reclassify cached, previously collected notices without requiring fresh detail calls.
+  const {programs,aliases,archive}=combinePrograms(npay.map(classifyProgram),bizinfo.map(classifyProgram),previous);
   const signature=digest(JSON.stringify(programs));const version='v-'+completed.replace(/\D/g,'')+'-'+signature.slice(0,10),dir=join(root,version);
   await mkdir(join(dir,'details'),{recursive:true});
   const files={};
@@ -37,7 +39,10 @@ export async function exportCatalog(root,{npay,bizinfo,previous=[],expected,expe
   for(const p of [...programs,...archive])shards[shardFor(p.id)][p.id]={...p,staticCatalog:true,detailPending:false};
   for(let i=0;i<32;i++)await output(`details/${i}.json.gz`,shards[i]);
   const detailCount=programs.filter(p=>p.sourceProvider==='bizinfo'||p.detailAvailable).length;
-  const status={connected:true,mode:'live',count:programs.length,lastSuccess:completed,running:false,lastRun:{status:'success',count:programs.length,completed},bizinfoLastSuccess,bizinfoError,detailCount,pdfCount,schedule:{state:'enabled',time:'매일 06:17',timezone:'Asia/Seoul'},catalog:{npaySourceCount:expected,npayActiveCount:expectedActive,uniqueCount:programs.length,lastSuccess:completed}};
+  const npayNotDetailed=programs.filter(p=>p.sourceProvider==='npay'&&!p.detailAvailable);
+  const npayActiveNotDetailed=npayNotDetailed.filter(p=>p.sourceActive).length;
+  const typeCounts={};for(const p of programs)typeCounts[p.type]=(typeCounts[p.type]||0)+1;
+  const status={connected:true,mode:'live',count:programs.length,lastSuccess:completed,running:false,lastRun:{status:'success',count:programs.length,completed},bizinfoLastSuccess,bizinfoError,detailCount,npayMissingDetailCount:npayNotDetailed.length,npayActiveMissingDetailCount:npayActiveNotDetailed,typeCounts,pdfCount,schedule:{state:'enabled',time:'매일 06:17',timezone:'Asia/Seoul'},catalog:{npaySourceCount:expected,npayActiveCount:expectedActive,uniqueCount:programs.length,lastSuccess:completed}};
   const manifest={schema:1,version,files,aliases,status};
   // Publish the manifest only after every shard has been written and verified.
   await verifyCatalog(root,manifest);

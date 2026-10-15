@@ -19,5 +19,5 @@ export function renderOverview(p){
   return `<section class="notice-overview"><h3>사업개요 · 지원 내용</h3>${overview}${support}</section>`;
 }
 export function renderClassification(p){
-  return `<div class="notice-classification"><span class="badge category">${e(categoryLabel(p))}</span><span class="classification-sub">${e(p.subcategory||'중분류 미제공')}</span><span class="badge">${e(p.type)}</span></div>`;
+  return `<div class="notice-classification"><span class="badge category">${e(categoryLabel(p))}</span><span class="classification-sub">${e(p.subcategory||'중분류 미제공')}</span><span class="badge">${e(p.type)}</span></div>${p.classificationInferred?`<p class="muted tiny" style="margin:5px 0 12px">지원 유형·목적·세부 분야: 자동 분류(${e(p.classificationBasis||'정보 확인 필요')}) · 실제 신청조건과 지원방식은 공고 원문을 확인하세요.</p>`:''}`;
 }

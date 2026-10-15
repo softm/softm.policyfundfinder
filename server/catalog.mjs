@@ -1,4 +1,5 @@
 import {plain} from './bizinfo.mjs';
+import {classifyProgram} from '../public/notice-classification.js';
 import {koreanDate,deadline,categoryLabel} from '../public/core.js';
 import {regions} from '../public/data.js';
 const ROOT='https://ica.pay.naver.com/partner/api/subvention';
@@ -22,13 +23,13 @@ export function normalizeNpay(row,checkedAt=koreanDate()){
   const attachments=(row.subventionFileList||[]).map(f=>({name:plain(f.linkFileName)||'첨부파일',url:url(f.linkFileUrlAddress),kind:'첨부파일',pdf:/\.pdf$/i.test(f.linkFileName||'')})).filter(f=>f.url);
   const sourceUrl=url(row.pblancDetailUrl)||`https://mybiz.pay.naver.com/subvention/detail/${encodeURIComponent(row.subventionId)}`;
   const application=url(row.subventionUrlAddress||row.subventionHomepageUrl);
-  return {id:'NPAY_'+row.subventionId,externalId:row.subventionId,sourceProvider:'npay',sourceActive:row.isActive===true,title,fullTitle:title,
+  return classifyProgram({id:'NPAY_'+row.subventionId,externalId:row.subventionId,sourceProvider:'npay',sourceActive:row.isActive===true,title,fullTitle:title,
     category,subcategory:'',region:selectedRegions.length===1?selectedRegions[0]:selectedRegions.length?'복수지역':area.includes('전국')?'전국':'지역 확인',regions:selectedRegions,regionSoft:true,
     type:'지원사업',purpose:{금융:'사업자금',기술:'ESG·기술',수출:'판로·홍보',내수:'판로·홍보',창업:'창업'}[category]||'기타',agency:plain(row.receptionInstitutionName)||'기관 원문 확인',published:'',start:null,end,
     periodText:plain(row.receptionTermContent)||'접수 기간 원문 확인',benefit:support.slice(0,160)||(amountMax?`지원 한도 최대 ${amountMax.toLocaleString('ko-KR')}원 · 상세 지원내용 원문 확인`:'지원 내용 상세 확인'),supportText:support.slice(0,24000),amountMax,summary:summary||'공고 상세 정보를 아직 수집하지 못했습니다. 제공처 원문을 확인하세요.',overview:summary,
     target:target||'신청 자격 원문 확인',industries:[],businessKinds:[],requirements:['공개 목록의 지역·분야는 검색 분류입니다. 신청 자격과 제외 조건은 공식 원문에서 확인하세요.'],
     method:method||'신청 방법 상세 확인',application,sourceUrl,attachments,documents:[],contact:plain(row.responsibleDivisionName)||'공식 원문의 문의처 확인',phone:plain(row.telNumber)||undefined,
-    tags,cost:'자부담·지원 한도 원문 확인',repayment:'지원 성격·상환 조건 원문 확인',checkedAt,imported:true,detailAvailable,detailPending:!detailAvailable};
+    tags,sourceSupportMethods:(row.subventionSupportMethodCodeList||[]).map(v=>plain(v.description)).filter(Boolean),cost:'자부담·지원 한도 원문 확인',repayment:'지원 성격·상환 조건 원문 확인',checkedAt,imported:true,detailAvailable,detailPending:!detailAvailable});
 }
 export async function publicRead(path,fetcher=fetch){
   const r=await fetcher(ROOT+path,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(45000)});

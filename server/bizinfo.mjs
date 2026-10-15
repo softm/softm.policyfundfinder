@@ -1,4 +1,5 @@
 import {regions} from '../public/data.js';
+import {classifyProgram} from '../public/notice-classification.js';
 import {normalizeAttachments} from '../public/attachment-links.js';
 export const API_URL='https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do';
 export function plain(value){
@@ -37,7 +38,7 @@ export function normalizeNotice(row,checkedAt){
   const supportText=bullets.length>=3?bullets.slice(2).join(' / '):'';
   const attachments=noticeAttachments(row);
   const subcategory=plain(row.pldirSportRealmMlsfcCodeNm);
-  return {id,title,fullTitle:title,region:regionTags.length===1?regionTags[0]:regionTags.length?'복수지역':tags.includes('전국')?'전국':'지역 확인',regions:regionTags,regionSoft:true,
+  return classifyProgram({id,title,fullTitle:title,region:regionTags.length===1?regionTags[0]:regionTags.length?'복수지역':tags.includes('전국')?'전국':'지역 확인',regions:regionTags,regionSoft:true,
     type:category==='금융'?'금융지원':/바우처/.test(supportText)?'바우처':'지원사업',purpose,agency:[plain(row.jrsdInsttNm||row.author),plain(row.excInsttNm)].filter(Boolean).join(' · ')||'원문 확인',
     supervisingAgency:plain(row.jrsdInsttNm||row.author),executingAgency:plain(row.excInsttNm),
     published:date(row.creatPnttm||row.pubDate)||'',start,end,periodText:period||'접수 기간 원문 확인',budgetLimited:/예산.*소진/.test(period),
@@ -45,7 +46,7 @@ export function normalizeNotice(row,checkedAt){
     industries:[],businessKinds:[],requirements:['API의 지역·분야는 검색 분류입니다. 실제 소재지·업종·기업 규모·지원 한도·제외 조건은 원문에서 확인하세요.'],
     method:plain(row.reqstMthPapersCn)||'공식 원문의 신청 방법 및 첨부 서류 확인',contact:plain(row.refrncNm)||'공식 원문의 문의처 확인',
     application:safeUrl(row.rceptEngnHmpgUrl),documents:[],attachments,cost:'자부담·지원 한도는 원문 확인',repayment:/바우처/.test(supportText)?'바우처 지원 · 사용 범위와 정산 조건은 공고문 확인':'융자·보조금·현물 여부와 상환 조건은 원문 확인',
-    tags:tags.slice(0,12),sourceUrl:'https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId='+encodeURIComponent(id),checkedAt,imported:true,category,subcategory};
+    tags:tags.slice(0,12),sourceUrl:'https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId='+encodeURIComponent(id),checkedAt,imported:true,sourceProvider:'bizinfo',category,subcategory});
 }
 export function parseFeed(payload){
   if(!payload||typeof payload!=='object')throw Error('기업마당 응답 형식을 확인할 수 없습니다.');

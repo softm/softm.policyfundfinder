@@ -90,7 +90,7 @@ test('entry point and offline asset list load the isolated sharing feature', asy
   const sw=await readFile(new URL('../public/sw.js',import.meta.url),'utf8');
   assert.match(html, /\.\/public\/sharing-ui\.js\?v=/); assert.match(html, /\.\/public\/sharing\.css\?v=/);
   for (const asset of ['sharing.js','sharing-ui.js','sharing.css']) assert.ok(sw.includes(asset));
-  assert.match(sw, /pages-v6-share/);
+  assert.match(sw, /pages-v8-classification/);
 });
 test('share dialog remains separate from detail and viewer dialogs', async () => {
   const ui=await readFile(new URL('../public/sharing-ui.js',import.meta.url),'utf8');
