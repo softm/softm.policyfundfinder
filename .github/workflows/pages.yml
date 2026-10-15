@@ -42,14 +42,15 @@ jobs:
       - name: Test static search and complete publication
         run: node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs tests/sharing.test.mjs
       - name: Collect full catalog and active details
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[refresh detail]'))
         env:
           BIZINFO_API_KEY: ${{ secrets.BIZINFO_API_KEY }}
-          DETAIL_LIMIT: '500'
+          DETAIL_LIMIT: '1200'
+          DETAIL_PRIORITY_IDS: 'PRV_97_66082'
           PDF_LIMIT: '40'
         run: node scripts/collect-pages.mjs
       - name: Use last complete data on source-only deployments
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.refresh)
+        if: (github.event_name == 'push' && !contains(github.event.head_commit.message, '[refresh detail]')) || (github.event_name == 'workflow_dispatch' && !inputs.refresh)
         run: |
           if [ -f .catalog-cache/data/manifest.json ]; then
             mkdir -p .work
@@ -58,7 +59,7 @@ jobs:
       - name: Build and verify all published files
         run: node scripts/build-pages.mjs
       - name: Preserve verified catalog for next collection
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.refresh) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[refresh detail]'))
         uses: actions/cache/save@v4
         with:
           path: .catalog-cache

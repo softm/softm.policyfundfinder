@@ -8,7 +8,9 @@ import {gunzipSync} from 'node:zlib';
 import {createStaticClient} from '../public/static-client.js';
 import {completeIndex,searchCatalog} from '../public/static-search.js';
 import {exportCatalog,verifyCatalog} from '../scripts/static-catalog.mjs';
-import {collectNpay} from '../scripts/collect-pages.mjs';
+import {collectNpay,prioritizeNpayDetails} from '../scripts/collect-pages.mjs';
+import {normalizeNpay} from '../server/catalog.mjs';
+import {renderOverview} from '../public/notice-view.js';
 import {createDialogLayers} from '../public/dialog-layers.js';
 import {metricFilters,filterChips} from '../public/search-controls.js';
 const notice=(id,title,extra={})=>({id,title,fullTitle:title,category:'기술',subcategory:'장비지원',region:'충남',regions:['충남'],regionSoft:true,type:'지원사업',purpose:'기타',agency:'기관',summary:'스마트팜 장비',target:'농업인',published:'2026-10-01',start:null,end:'2026-10-20',sourceActive:true,sourceProvider:'npay',sourceUrl:'https://example.com/'+id,tags:[],industries:[],businessKinds:[],requirements:[],documents:[],attachments:[],checkedAt:'2026-10-12',imported:true,detailAvailable:true,...extra});
@@ -137,4 +139,32 @@ test('navigation closes both layers and a delayed close cannot clear a new viewe
   layers.closeParent();await Promise.resolve();assert.equal(viewer.open,false);assert.equal(parent.open,false);
   assert.equal(state().parentCloses,1);assert.equal(state().viewerCloses,2);
   layers.openViewer('late','document-dialog',trigger);assert.equal(viewer.open,false);
+});
+
+
+test('Npay lists are explicitly incomplete until a matching detail record is collected',()=>{
+  const list={subventionId:'PRV_97_66082',subventionTitleName:'탄소중립 실천기업 재정지원 사업 모집 공고',receptionInstitutionName:'광명시청',receptionEndYmd:'26.11.30',receptionTermContent:'예산 소진 시 조기 마감',supportAmount:5000000,subventionAreaList:[{areaName:'경기도 광명시'}],subventionCompanyTypeCodeList:[{description:'경영'}]};
+  const partial=normalizeNpay(list,'2026-10-16');
+  assert.equal(partial.detailAvailable,false);
+  assert.equal(partial.amountMax,5000000);
+  assert.match(partial.benefit,/5,000,000원/);
+  assert.match(renderOverview(partial),/상세 내용 미수집/);
+  const detail={...list,businessOverviewHtmlContent:'탄소중립 실천을 촉진하고 지속 가능한 경영환경 조성 지원',supportQualificationHtmlContent:'광명시 내 사업자등록을 한 제조업자',supportHtmlContent:'ㅇ 지원내용 : 친환경·에너지 설비 개선 ㅇ 지원금액 : 설치비의 10%(업체당 최대 500만원)',applicationWayHtmlContent:'광명시 탄소중립과 방문 또는 등기우편 제출',subventionUrlAddress:'https://www.gm.go.kr/pt/user/nftcBbs/BD_selectNftcBbsDetail.do?q_nftcBbsCode=1001&q_nftcBbsMgtno=66082',telNumber:'02-2680-6746',responsibleDivisionName:'탄소중립과'};
+  const full=normalizeNpay(detail,'2026-10-16');
+  assert.equal(full.detailAvailable,true);assert.equal(full.detailPending,false);
+  assert.match(full.target,/광명시 내 사업자등록/);
+  assert.match(full.supportText,/설치비의 10%/);
+  assert.match(renderOverview(full),/설치비의 10%/);
+  assert.match(full.method,/등기우편/);
+  assert.equal(full.phone,'02-2680-6746');
+  assert.equal(new URL(full.application).searchParams.get('q_nftcBbsMgtno'),'66082');
+  assert.match(full.sourceUrl,/PRV_97_66082/);
+});
+test('reported Npay records are prioritized, then records without details',()=>{
+  const rows=[{externalId:'A',detailAvailable:true,detailCheckedAt:'2026-10-10'},
+    {externalId:'B',detailAvailable:false},{externalId:'PRV_97_66082',detailAvailable:false},
+    {externalId:'C',detailAvailable:true,detailCheckedAt:'2026-10-11'}];
+  assert.deepEqual(prioritizeNpayDetails(rows,2,['PRV_97_66082']).map(p=>p.externalId),['PRV_97_66082','B']);
+  assert.deepEqual(prioritizeNpayDetails(rows,1).map(p=>p.externalId),['B']);
+  assert.deepEqual(prioritizeNpayDetails(rows,0,['PRV_97_66082']),[]);
 });

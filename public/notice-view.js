@@ -13,7 +13,10 @@ export function renderAttachments(p){
   return `<section class="notice-attachments"><h3>첨부파일 · 공고문</h3>${files.length?`<div class="attachment-list">${files.map(f=>`<div class="attachment-item"><div><small>${e(f.kind||'첨부파일')}</small><strong>${e(f.name||'첨부파일')}</strong></div><div class="attachment-actions">${f.pdf&&(!p.staticCatalog||f.cachedUrl)?`<button class="btn soft small" data-action="attachment" data-id="${e(p.id)}" data-index="${f.index}">PDF 보기</button>`:f.viewerUrl?`<button class="btn soft small" data-action="document-view" data-id="${e(p.id)}" data-index="${f.index}">바로보기</button>`:''}<a class="btn secondary small" href="${e(f.downloadUrl||f.url)}" target="_blank" rel="noopener noreferrer" download="${e(f.name)}">다운로드 ${e(f.name.split('.').pop()?.toUpperCase()||'')} ↗</a></div></div>`).join('')}</div><p class="muted tiny spaced">바로보기는 공식 문서 뷰어를 사용합니다. ZIP은 다운로드 후 압축을 해제하세요. 뷰어가 없는 파일은 공고 원문에서 확인할 수 있습니다.</p>`:'<p>첨부파일 링크가 제공되지 않았습니다. 공고 원문에서 파일 목록을 확인하세요.</p>'}</section>`;
 }
 export function renderOverview(p){
-  return `<section class="notice-overview"><h3>사업개요 · 지원 내용</h3>${String(p.overview||p.summary||'사업개요 원문 확인').split(/\n\s*\n/).map(t=>`<p>${e(t)}</p>`).join('')}</section>`;
+  if(p.sourceProvider==='npay'&&!p.detailAvailable)return `<section class="notice-overview"><h3>사업개요 · 지원 내용</h3><div class="info-notice" role="status"><strong>상세 내용 미수집</strong><span>현재 제공처의 공고 목록 정보만 확보했습니다. 지원대상·지원금액·신청방법 등은 위의 공고 원문에서 확인해 주세요. 목록에 표시된 분류와 마감일만으로 신청 자격을 판단하지 마세요.</span></div></section>`;
+  const overview=String(p.overview||p.summary||'사업개요 원문 확인').split(/\n\s*\n/).map(t=>`<p>${e(t)}</p>`).join('');
+  const support=p.sourceProvider==='npay'&&p.supportText?`<h4 style="margin:16px 0 7px">지원 내용 및 금액</h4>${String(p.supportText).split(/\n\s*\n/).map(t=>`<p>${e(t)}</p>`).join('')}`:'';
+  return `<section class="notice-overview"><h3>사업개요 · 지원 내용</h3>${overview}${support}</section>`;
 }
 export function renderClassification(p){
   return `<div class="notice-classification"><span class="badge category">${e(categoryLabel(p))}</span><span class="classification-sub">${e(p.subcategory||'중분류 미제공')}</span><span class="badge">${e(p.type)}</span></div>`;

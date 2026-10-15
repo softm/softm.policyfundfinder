@@ -20,7 +20,12 @@ export async function collectNpay(read=publicRead){
   if(final!==expected||rows.length!==expected||new Set(rows.map(r=>r.subventionId)).size!==expected)throw Error('수집 중 원천 변경 또는 공고 누락. 기존 배포를 유지합니다.');
   return {rows,expected,expectedActive};
 }
-export async function collectPages({key=process.env.BIZINFO_API_KEY,root='.work/data',cacheRoot='.catalog-cache',detailLimit=Number(process.env.DETAIL_LIMIT||500),pdfLimit=Number(process.env.PDF_LIMIT||40)}={}){
+export function prioritizeNpayDetails(active,limit=500,priorityIds=[]){
+  const preferred=new Set(priorityIds);
+  const rank=p=>preferred.has(p.externalId)?0:!p.detailAvailable?1:2;
+  return [...active].sort((a,b)=>rank(a)-rank(b)||String(a.detailCheckedAt||'').localeCompare(String(b.detailCheckedAt||''))||a.externalId.localeCompare(b.externalId)).slice(0,Math.max(0,Math.trunc(limit)));
+}
+export async function collectPages({key=process.env.BIZINFO_API_KEY,root='.work/data',cacheRoot='.catalog-cache',detailLimit=Number(process.env.DETAIL_LIMIT||500),detailPriorityIds=String(process.env.DETAIL_PRIORITY_IDS||'').split(',').map(s=>s.trim()).filter(Boolean),pdfLimit=Number(process.env.PDF_LIMIT||40)}={}){
   let previous;try{previous=await readSnapshot(join(cacheRoot,'data'));}catch{previous=await readSnapshot('public/data');}
   const previousRoot=await stat(join(cacheRoot,'data',previous.manifest.version)).then(()=>join(cacheRoot,'data')).catch(()=>join('public','data'));
   await rm(root,{recursive:true,force:true});
@@ -33,11 +38,20 @@ export async function collectPages({key=process.env.BIZINFO_API_KEY,root='.work/
   else {bizinfoError='기업마당 자동 갱신용 인증키가 아직 설정되지 않아 이전 성공 자료를 사용합니다.';console.warn(bizinfoError);}
   const {rows,expected,expectedActive}=await retry(()=>collectNpay(),2);
   await writeJsonGzip(join(cacheRoot,'npay-list.json.gz'),{rows,expected,expectedActive,completed:new Date().toISOString()});
-  const npay=rows.map(row=>{const base=normalizeNpay(row),prior=previousNpay.get(base.externalId);return prior?.detailAvailable?{...prior,...base,summary:prior.summary,overview:prior.overview,target:prior.target,benefit:prior.benefit,method:prior.method,application:prior.application,attachments:prior.attachments,sourceUrl:prior.sourceUrl,contact:prior.contact,phone:prior.phone,detailAvailable:true,detailCheckedAt:prior.detailCheckedAt}:base;});
+  const npay=rows.map(row=>{const base=normalizeNpay(row),prior=previousNpay.get(base.externalId);
+    // Do not attach stale detail content after upstream IDs or publishers change.
+    if(!prior?.detailAvailable||prior.title!==base.title||prior.agency!==base.agency)return base;
+    return {...prior,...base,summary:prior.summary,overview:prior.overview,target:prior.target,benefit:prior.benefit,supportText:prior.supportText,method:prior.method,application:prior.application,attachments:prior.attachments,sourceUrl:prior.sourceUrl,contact:prior.contact,phone:prior.phone,amountMax:prior.amountMax||base.amountMax,detailAvailable:true,detailPending:false,detailCheckedAt:prior.detailCheckedAt};
+  });
   const bizinfoKeys=new Set(bizinfo.map(titleKey));
-  const active=npay.filter(p=>p.sourceActive&&!bizinfoKeys.has(titleKey(p))).sort((a,b)=>(a.detailCheckedAt||'').localeCompare(b.detailCheckedAt||''));
-  const selected=active.slice(0,detailLimit),byId=new Map(rows.map(r=>[r.subventionId,r]));let detailSuccess=0,detailDone=0;
-  await concurrent(selected,4,async p=>{try{const row=byId.get(p.externalId);const detail=await retry(()=>publicRead('/detail/'+encodeURIComponent(p.externalId)),2);Object.assign(p,normalizeNpay({...row,...detail,isActive:p.sourceActive}),{detailAvailable:true,detailCheckedAt:new Date().toISOString()});detailSuccess++;}catch{p.detailAvailable=!!p.detailAvailable;}detailDone++;if(detailDone%25===0)console.log('공고 상세 확인',detailDone,'/',selected.length,'성공',detailSuccess);});
+  const active=npay.filter(p=>p.sourceActive&&!bizinfoKeys.has(titleKey(p)));
+  const selected=prioritizeNpayDetails(active,detailLimit,detailPriorityIds),byId=new Map(rows.map(r=>[r.subventionId,r]));let detailSuccess=0,detailDone=0;
+  await concurrent(selected,4,async p=>{try{const row=byId.get(p.externalId);const detail=await retry(()=>publicRead('/detail/'+encodeURIComponent(p.externalId)),2);
+    if(!row||detail?.subventionId!==p.externalId)throw Error('공고 ID 불일치');
+    const next=normalizeNpay({...row,...detail,isActive:p.sourceActive});
+    if(next.title!==p.title||!next.detailAvailable)throw Error('공고 상세 제목 불일치 또는 내용 누락');
+    Object.assign(p,next,{detailAvailable:true,detailPending:false,detailCheckedAt:new Date().toISOString()});detailSuccess++;
+  }catch{p.detailAvailable=!!p.detailAvailable;}detailDone++;if(detailDone%25===0)console.log('공고 상세 확인',detailDone,'/',selected.length,'성공',detailSuccess);});
   // PDFs use only registered official attachment URLs. Size, signature, redirects and total budget are checked.
   const all=[...bizinfo,...npay],pdfs=all.filter(p=>deadline(p).state!=='closed').flatMap(p=>(p.attachments||[]).filter(f=>f.pdf).map(f=>({p,f}))),pdfRoot=join(root,'pdf');await mkdir(pdfRoot,{recursive:true});
   let downloaded=0,attempted=0,totalBytes=0;const seen=new Set();
