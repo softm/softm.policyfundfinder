@@ -1,0 +1,41 @@
+name: Publish data collection PDF
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/data-collection-guide-20261016.md
+      - scripts/render_data_collection_pdf.py
+      - .github/workflows/publish-data-collection-pdf.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: policyfundfinder-data-pdf
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Korean fonts and PDF library
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+          python -m pip install --quiet 'reportlab==4.4.9'
+      - name: Create the Korean PDF report
+        run: python scripts/render_data_collection_pdf.py
+      - name: Commit generated PDF
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/policyfundfinder-data-collection-20261016.pdf
+          if git diff --cached --quiet; then
+            echo 'PDF is already current'
+            exit 0
+          fi
+          git commit -m 'docs: publish data collection PDF [skip ci]'
+          git push origin HEAD:main
