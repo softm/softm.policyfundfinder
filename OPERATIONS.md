@@ -47,3 +47,12 @@ https://github.com/softm/softm.policyfundfinder/actions/workflows/pages.yml
 Actions는 공식 공고 HTML에 공개된 파일 ID·물리 경로를 읽어 HWP·HWPX·PDF 등 지원 형식의 문서 뷰어 링크를 보관합니다. 브라우저에서 해당 뷰어를 레이어 팝업으로 표시하며 새 창 보기와 다운로드를 함께 제공합니다. ZIP은 다운로드만 제공합니다. 뷰어 연결이 미수집되었거나 제공처 장애가 있으면 공식 원문을 사용합니다. 뷰어 메타데이터는 `data/attachment-views-<timestamp>.json.gz`이며 전체 목록 갱신 시 직전 링크를 보존하면서 150개 공고를 확인합니다. 초기 일괄 확인은 `ATTACHMENT_LIMIT=2000 node scripts/enrich-attachments.mjs`로 실행합니다.
 
 태그 링크는 `?tag=기술`, `?tag=서울`, `?tag=전남광주`처럼 공고의 원문 태그를 정확히 조회합니다. 일반 지역·분야 필터와 조합할 수 있고 태그 해제로 취소합니다. 제목·본문에만 해당 단어가 있는 공고를 태그로 잘못 포함하지 않습니다.
+
+
+## 2026-10-16 Pages 중복 배포 방지
+
+GitHub 저장소에서 Pages Source가 브랜치 기반으로 설정되어 있으면 `pages build and deployment`(Jekyll 자동 배포)와 이 저장소의 `Collect notices and deploy Pages`(정적 검증본 배포)가 동시에 실행됩니다. 전자가 나중에 종료하면 사이트의 `/data/manifest.json`이 404가 되고 상세 팝업이 오래된 초기 데이터로 표시될 수 있습니다. 정상 동작은 `/data/manifest.json`이 응답하고 `/data/…/details/*.json.gz`을 반환하는 상태입니다.
+
+**영구 해결**: [Pages 설정](https://github.com/softm/softm.policyfundfinder/settings/pages) → Build and deployment → Source를 **GitHub Actions**로 지정합니다. 현재 커스텀 워크플로는 Push 배포 전에 동일 커밋의 Jekyll 자동 배포 완료를 기다리는 우회 보호장치를 추가했지만, 근본적으로 브랜치 기반 배포를 해제하는 것이 안전합니다. Actions만 사용하면 중복 Pages 실행이 사라집니다.
+
+수집 또는 소스 변경 후 [워크플로 현황](https://github.com/softm/softm.policyfundfinder/actions/workflows/pages.yml)에서 build/deploy가 성공했는지 확인하고, 운영 URL에서 /data/manifest.json이 HTTP 200인지와 필드 목록이 정상인지 확인합니다.

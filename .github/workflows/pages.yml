@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -76,6 +77,35 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # GitHub Pages is currently configured in branch/Jekyll mode as well as
+      # running this custom workflow. The automatic branch deployment can
+      # overwrite the verified _site after our job otherwise reports success.
+      # Source: GitHub Actions in repository Pages settings is the permanent fix.
+      - name: Wait for competing branch Pages deployment
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          missing=0
+          for attempt in $(seq 1 60); do
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=20" --jq '[.workflow_runs[] | select(.name == "pages build and deployment")][0].status // "missing"' 2>/dev/null || echo "unknown")"
+            if [ "$state" = "completed" ]; then
+              echo "Legacy Pages build completed; publishing verified catalog last."
+              exit 0
+            fi
+            if [ "$state" = "missing" ] || [ "$state" = "unknown" ]; then
+              missing=$((missing + 1))
+              if [ "$missing" -ge 12 ]; then
+                echo "No competing branch Pages run found; deploying verified catalog."
+                exit 0
+              fi
+            else
+              missing=0
+            fi
+            echo "Waiting for competing Pages run: $state ($attempt/60)"
+            sleep 5
+          done
+          echo "::warning::Default Pages build exceeded five minutes. Switch Pages Source to GitHub Actions to prevent deployment races."
       - name: Deploy verified site
         id: deployment
         uses: actions/deploy-pages@v4
