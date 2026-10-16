@@ -1,5 +1,5 @@
-const CACHE='policyfundfinder-pages-v8-classification-20261016';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./core.js','./data.js','./data-client.js','./notice-view.js','./attachment-links.js','./tag-links.js','./dialog-layers.js','./search-controls.js','./sharing.js','./sharing-ui.js','./sharing.css','./static-client.js','./static-search.js','./search-worker.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
+const CACHE='policyfundfinder-pages-v8-classification-notice-text-20261016';
+const ASSETS=['./','./index.html','./styles.css','./app.js','./core.js','./data.js','./data-client.js','./notice-view.js','./notice-text.js','./attachment-links.js','./tag-links.js','./dialog-layers.js','./search-controls.js','./sharing.js','./sharing-ui.js','./sharing.css','./static-client.js','./static-search.js','./search-worker.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(event.request.method!=='GET'||u.origin!==self.location.origin||!ASSETS.some(p=>new URL(p,self.registration.scope).pathname===u.pathname))return;

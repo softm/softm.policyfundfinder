@@ -1,4 +1,5 @@
 import {plain} from './bizinfo.mjs';
+import {normalizeNoticeText} from '../public/notice-text.js';
 import {classifyProgram} from '../public/notice-classification.js';
 import {koreanDate,deadline,categoryLabel} from '../public/core.js';
 import {regions} from '../public/data.js';
@@ -13,10 +14,10 @@ export function normalizeNpay(row,checkedAt=koreanDate()){
   const titleRegions=regions.filter(r=>title.startsWith('['+r)||title.startsWith('['+r+'ㆍ'));
   const selectedRegions=titleRegions.length?titleRegions:regions.filter(r=>area.some(a=>a.startsWith(r)));
   const category=plain(row.subventionCompanyTypeCodeList?.[0]?.description)||'분류 미제공';
-  const end=day(row.receptionEndYmd),summary=plain(row.businessOverviewContent||row.businessOverviewHtmlContent);
-  const target=plain(row.supportQualificationContent||row.supportQualificationHtmlContent);
-  const method=plain(row.applicationWayContent||row.applicationWayHtmlContent);
-  const support=plain(row.supportContent||row.supportHtmlContent);
+  const end=day(row.receptionEndYmd),summary=normalizeNoticeText(row.businessOverviewContent||row.businessOverviewHtmlContent);
+  const target=normalizeNoticeText(row.supportQualificationContent||row.supportQualificationHtmlContent);
+  const method=normalizeNoticeText(row.applicationWayContent||row.applicationWayHtmlContent);
+  const support=normalizeNoticeText(row.supportContent||row.supportHtmlContent);
   const detailAvailable=Boolean(summary||support||target||method);
   const amount=Number(row.supportAmount);
   const amountMax=Number.isFinite(amount)&&amount>0?amount:undefined;
