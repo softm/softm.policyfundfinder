@@ -42,3 +42,12 @@ node scripts/build-pages.mjs
 ## 공고 상세 줄바꿈·항목 레이아웃 (2026-10-16)
 
 네이버 상세 JSON이 실제 개행·HTML 없이 NBSP와 `ㅇ 지원내용`, `- 항목`, `* 주의사항`, `ㅇ 지원금액` 등으로 연결된 경우에도 브라우저의 `public/notice-text.js`가 공통적으로 문단·소제목·목록·주석으로 복원합니다. 과거에 수집해 공백으로 합쳐진 공고도 화면 표시 시 복원하므로 전체 재수집 없이 반영됩니다. 새로 수집하는 네이버 공고는 개행을 보존하는 `normalizeNoticeText`로 상세 필드를 저장합니다. 상세 상단에는 지원 금액 한 줄만 축약하고, 상세 본문에는 지원 조건 전문을 표시합니다. HTML 특수문자는 이스케이프하며 원문의 지원 조건과 금액을 임의 수정하지 않습니다. 회귀 테스트: `tests/notice-text.test.mjs`.
+
+
+## 데이터 수집·정리 문서 (2026-10-16)
+
+- [데이터 수집·정리 PDF](docs/policyfundfinder-data-collection-20261016.pdf)
+- [편집 가능한 수집 문서](docs/data-collection-guide-20261016.md)
+- [PDF 자동 생성 스크립트](scripts/render_data_collection_pdf.py)
+
+API 수집 구조, 상세 조회 우선순위, 카테고리, 중복 제거, 무결성 검증, 32개 상세파일 배포 구조와 운영 점검사항을 정리했습니다. Markdown이나 생성 스크립트를 수정하면 [PDF 생성 워크플로](.github/workflows/publish-data-collection-pdf.yml)가 문서를 재생성하여 저장소에 커밋합니다. 통계는 2026-10-16 08:43:54 KST 스냅샷 기준입니다.
