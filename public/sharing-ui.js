@@ -1,4 +1,4 @@
-import {appScrollPosition,scrollApp} from './adfit.js?v=20261022-2'; // SOFTM-ADFIT 날짜:20261022 : 공유창을 닫을 때 광고 위 본문 위치를 복원
+import {appScrollPosition,scrollApp} from './adfit.js?v=20261022-4'; // SOFTM-ADFIT 날짜:20261022 : 공유창을 닫을 때 광고 위 본문 위치를 복원
 import {api} from './data-client.js';
 import {appShareData, noticeShareData, searchShareData, shareText, nativeShare, copyShareText} from './sharing.js';
 

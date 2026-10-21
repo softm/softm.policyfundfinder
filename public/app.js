@@ -1,4 +1,4 @@
-import {createAdManager,appScrollPosition,scrollApp} from './adfit.js?v=20261022-2';
+import {createAdManager,appScrollPosition,scrollApp} from './adfit.js?v=20261022-4';
 import {programs as curatedPrograms,DATA_DATE,regions,industries,types,purposes,categories} from './data.js';
 import {deadline,match,filterPrograms,categoryFacets,categoryLabel,loanEstimate,subsidyEstimate,buildCalendar,koreanDate,safeText as e} from './core.js';
 
@@ -20,7 +20,7 @@ const brandIcon=new URL('./icon.svg',import.meta.url).href;
 const icon=(name,cls='')=>`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${paths[name]||paths.info}</svg>`;
 const money=n=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:0}).format(n)+'원';
 const app=document.querySelector('#app'),dialog=document.querySelector('#dialog'),viewerDialog=document.querySelector('#viewer-dialog');
-const advertising=createAdManager({app}); // SOFTM-ADFIT 날짜:20261022 : 광고는 앱 재렌더와 독립된 수명으로 관리
+const advertising=createAdManager({app,startPaused:true}); // SOFTM-ADFIT 날짜:20261022 : 초기 공고·개인 기록 복원 중에는 광고를 요청하지 않는다
 const dialogLayers=createDialogLayers(dialog,viewerDialog,{onViewerClose:releasePdf,onParentClose:()=>{activeDetail=null;urlUpdate();}});
 const KEY='jiwonhannun-v1';
 const known=new Set(programs.map(p=>p.id));
@@ -222,6 +222,6 @@ function dataBanner(){const issue=dataError||dataState.lastRun?.error||dataState
 function mergePrograms(list){for(const p of list){const index=programs.findIndex(x=>x.id===p.id);if(index>=0)programs[index]=p;else programs.push(p);known.add(p.id);}}
 async function loadStatus(){try{dataState=await api('/api/data-status');serverReady=true;dataError='';return true;}catch(err){dataError=err.message;return false;}}
 async function hydrateSaved(){const ids=[...new Set([...state.saved,...Object.keys(state.records),...(query.get('notice')?[query.get('notice')]:[])])];if(!ids.length)return;for(let i=0;i<ids.length;i+=200){try{const r=await api('/api/notices',{ids:ids.slice(i,i+200)});for(const p of r.programs){if(p.requestedId&&p.requestedId!==p.id){noticeAliases.set(p.requestedId,p.id);state.saved=[...new Set(state.saved.map(id=>id===p.requestedId?p.id:id))];if(state.records[p.requestedId]&&!state.records[p.id])state.records[p.id]=state.records[p.requestedId];}}mergePrograms(r.programs);persist();}catch{toast('일부 관심사업의 원문 자료를 불러오지 못했습니다. 저장한 준비 기록은 유지됩니다.');break;}}}
-async function initializeData(){await loadStatus();await hydrateSaved();render();if(query.get('notice')){const id=noticeAliases.get(query.get('notice'))||query.get('notice');if(known.has(id))details(id);else toast('공고 자료를 찾지 못했습니다. 공식 원문을 확인해 주세요.');}}
+async function initializeData(){await loadStatus();await hydrateSaved();render();if(query.get('notice')){const id=noticeAliases.get(query.get('notice'))||query.get('notice');if(known.has(id))details(id);else toast('공고 자료를 찾지 못했습니다. 공식 원문을 확인해 주세요.');}advertising.setReady(true);} // SOFTM-ADFIT 날짜:20261022 : 최종 검색 결과가 도착한 뒤 안정된 지면에서만 첫 요청
 function connectDialog(){activeDetail=null;showDialog('공고 갱신 상태',`<p class="dialog-subtitle">매일 공고를 수집해 갱신합니다. 검색은 마지막으로 완료된 수집본을 사용합니다.</p><dl class="sync-summary"><div><dt>통합 공고</dt><dd>${dataState.count.toLocaleString('ko-KR')}건</dd></div><div><dt>마지막 갱신</dt><dd>${formatTime(dataState.lastSuccess)}</dd></div><div><dt>예약 갱신</dt><dd>매일 06:17 · 한국시간</dd></div><div><dt>상세 수집</dt><dd>${(dataState.detailCount||0).toLocaleString('ko-KR')}건 · 진행 중 상세 미확보 ${(dataState.npayActiveMissingDetailCount??0).toLocaleString('ko-KR')}건 · 미수집 상세는 공식 원문 연결</dd></div><div><dt>기업마당 자료</dt><dd>${formatTime(dataState.bizinfoLastSuccess)}${dataState.bizinfoError?' · 이전 성공본 사용':''}</dd></div></dl>${dataState.bizinfoError?`<p class="info-notice">${e(dataState.bizinfoError)}</p>`:''}<p class="muted spaced">예약 작업이 지연되거나 수집이 실패하면 이전 성공 자료를 유지합니다. 첨부파일은 원본 링크를 제공하고, 저장된 PDF는 바로 볼 수 있습니다.</p>`,`<button class="btn primary" data-action="sync-now">최신 배포 자료 확인</button><a class="btn secondary" href="https://github.com/softm/softm.policyfundfinder/actions" target="_blank" rel="noopener noreferrer">갱신 실행 내역 ↗</a>`);}
 async function syncNow(){if(syncing)return;syncing=true;try{dataState=await refreshData();await hydrateSaved();render();connectDialog();toast('배포된 최신 공고 자료를 확인했습니다.');}catch(error){toast(error.message);}finally{syncing=false;}}

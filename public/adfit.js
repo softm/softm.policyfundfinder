@@ -103,7 +103,7 @@ function preserveShell(app, markup) {
   }
 }
 
-export function createAdManager({app, config = adfitConfig} = {}) {
+export function createAdManager({app, config = adfitConfig, startPaused = false} = {}) {
   const preview = new URLSearchParams(location.search).get('adPreview') === '1';
   const allowed = isAllowedAdHost(location.hostname, config.allowedHosts);
   const enabled = preview || (config.enabled === true && allowed
@@ -112,11 +112,11 @@ export function createAdManager({app, config = adfitConfig} = {}) {
     preview,
     renderShell(markup) { app.innerHTML = markup; },
     renderList(host, cards, emptyMarkup) { host.innerHTML = cards.length ? cards.join('') : emptyMarkup; },
-    setLoading() {}, sync() {}
+    setLoading() {}, setReady() {}, sync() {}
   };
 
   let view = 'browse', count = 0, loading = false, frame = 0, listParts = null, selected = null;
-  let hadDialog = false, dialogPosition = null;
+  let hadDialog = false, dialogPosition = null, ready = !startPaused;
   let collapsed = false;
   try { collapsed = sessionStorage.getItem(STORAGE_KEY) === '1'; } catch {}
   const records = new Map(), mountedUnits = new Set();
@@ -175,7 +175,7 @@ export function createAdManager({app, config = adfitConfig} = {}) {
   window.jiwonAdFitFailed = ins => fail([...records.values()].find(item => item.ins === ins));
 
   function request(record, canRequest) {
-    if (!record || record.status !== 'idle' || !canRequest()) return;
+    if (!ready || !record || record.status !== 'idle' || !canRequest()) return;
     if (preview) {
       const placeholder = element('div', 'adfit-preview');
       placeholder.append(element('strong', '', '광고 미리보기'), element('span', '', `${record.slot.width} × ${record.slot.height}`));
@@ -183,7 +183,7 @@ export function createAdManager({app, config = adfitConfig} = {}) {
     }
     record.status = 'loading-sdk'; record.mount.dataset.state = 'loading';
     loadSdk(config.scriptUrl).then(sdk => {
-      if (!canRequest()) { record.status = 'idle'; record.mount.dataset.state = 'idle'; return; }
+      if (!ready || !canRequest()) { record.status = 'idle'; record.mount.dataset.state = 'idle'; return; }
       if (mountedUnits.has(record.slot.unit)) { fail(record); return; }
       const ins = element('ins', 'kakao_ad_area');
       ins.style.display = 'none'; ins.dataset.adUnit = record.slot.unit;
@@ -202,7 +202,7 @@ export function createAdManager({app, config = adfitConfig} = {}) {
     const nav = app.querySelector('.bottom-nav');
     const navHeight = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().height : 0;
     setSpace('--adfit-nav-height', navHeight);
-    const active = ['browse', 'saved', 'guide'].includes(view) && !suspended();
+    const active = ready && ['browse', 'saved', 'guide'].includes(view) && !suspended();
     // Empty/error lists never leave an advertisement standing in for content.
     const hasContent = view === 'guide' || (count > 0 && !loading);
     const sidebar = app.querySelector('.sidebar');
@@ -230,7 +230,7 @@ export function createAdManager({app, config = adfitConfig} = {}) {
       const horizontalSpace = ['marginLeft', 'marginRight', 'paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
         .reduce((total, property) => total + (Number.parseFloat(style[property]) || 0), 0);
       const availableWidth = listParts.host.clientWidth - horizontalSpace;
-      const eligible = view === 'browse' && !loading && !suspended()
+      const eligible = ready && view === 'browse' && !loading && !suspended()
         && listInsertionIndex(count, config.list) >= 0 && isValidAdSlot(config.list, preview)
         && availableWidth >= config.list.width && record.status !== 'failed';
       listParts.ad.hidden = !eligible; record.mount.hidden = !eligible;
@@ -289,6 +289,7 @@ export function createAdManager({app, config = adfitConfig} = {}) {
       sync();
     },
     setLoading(value) { loading = value; sync(); },
+    setReady(value = true) { ready = Boolean(value); sync(); },
     sync
   };
 }
