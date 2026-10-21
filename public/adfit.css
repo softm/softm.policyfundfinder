@@ -18,7 +18,7 @@ body.adfit-workspace {
   height:100dvh;
   min-height:0;
   padding-bottom:var(--adfit-nav-height);
-  overflow:hidden;
+  overflow:clip;
 }
 body.adfit-workspace > #app { flex:1 1 auto; min-height:0; width:100%; overflow:auto; overscroll-behavior-y:contain; scrollbar-gutter:stable; }
 body.adfit-workspace .sidebar { bottom:calc(var(--adfit-anchor-height) + var(--adfit-nav-height)); overflow-y:auto; }
