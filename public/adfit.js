@@ -129,7 +129,10 @@ export function createAdManager({app, config = adfitConfig} = {}) {
   bar.append(toggle);
   const panel = element('div', 'adfit-anchor-panel'); panel.id = 'adfit-anchor-panel';
   dock.append(bar, panel); document.body.append(dock);
+  // Keep focus/scrollIntoView from scrolling a second root viewport behind #app.
+  document.documentElement.classList.add('adfit-workspace-root');
   document.body.classList.add('adfit-workspace');
+  window.scrollTo({left:0, top:0, behavior:'instant'});
   document.body.dataset.adfitMode = preview ? 'preview' : 'live';
 
   function schedule() { if (!frame) frame = requestAnimationFrame(() => { frame = 0; sync(); }); }

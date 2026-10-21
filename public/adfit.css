@@ -1,10 +1,19 @@
 /** SOFTM-ADFIT START 날짜:20261022 : 본문 뷰포트와 광고 행을 분리해 공고·메뉴를 가리지 않는다. */
+html.adfit-workspace-root {
+  height:100%;
+  overflow:hidden;
+  overflow:clip;
+  overscroll-behavior:none;
+}
 body.adfit-workspace {
   --adfit-anchor-height:0px;
   --adfit-nav-height:0px;
   --adfit-sidebar-width:226px;
   display:flex;
   flex-direction:column;
+  position:fixed;
+  inset:0;
+  width:100%;
   height:100vh;
   height:100dvh;
   min-height:0;
@@ -41,7 +50,8 @@ body.adfit-workspace #toast { bottom:calc(var(--adfit-anchor-height) + var(--adf
   .adfit-list { margin-left:-14px; margin-right:-14px; }
 }
 @media print {
-  body.adfit-workspace { display:block; height:auto; overflow:visible; padding-bottom:0; }
+  html.adfit-workspace-root { height:auto; overflow:visible; }
+  body.adfit-workspace { display:block; position:static; inset:auto; width:auto; height:auto; overflow:visible; padding-bottom:0; }
   body.adfit-workspace > #app { overflow:visible; height:auto; }
   .adfit-anchor,.adfit-list { display:none!important; }
 }

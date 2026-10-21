@@ -1,4 +1,4 @@
-import {createAdManager,appScrollPosition,scrollApp} from './adfit.js';
+import {createAdManager,appScrollPosition,scrollApp} from './adfit.js?v=20261022-2';
 import {programs as curatedPrograms,DATA_DATE,regions,industries,types,purposes,categories} from './data.js';
 import {deadline,match,filterPrograms,categoryFacets,categoryLabel,loanEstimate,subsidyEstimate,buildCalendar,koreanDate,safeText as e} from './core.js';
 
