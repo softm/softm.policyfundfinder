@@ -1,3 +1,4 @@
+import {appScrollPosition,scrollApp} from './adfit.js'; // SOFTM-ADFIT 날짜:20261022 : 공유창을 닫을 때 광고 위 본문 위치를 복원
 import {api} from './data-client.js';
 import {appShareData, noticeShareData, searchShareData, shareText, nativeShare, copyShareText} from './sharing.js';
 
@@ -31,7 +32,7 @@ function preview(data) {
 }
 function openShare(data, trigger) {
   session++; opener = trigger; setBusy(false); preview(data);
-  position = {x:window.scrollX, y:window.scrollY, parentScroll:parent?.scrollTop};
+  position = {...appScrollPosition(), parentScroll:parent?.scrollTop};
   $('#share-title').textContent = data.kind === 'notice' ? '공고 공유' : data.kind === 'search' ? '검색조건 공유' : '앱 공유';
   $('#share-description').textContent = data.kind === 'search'
     ? '지역·분야·접수 상태·검색어·태그 등 검색조건을 공유합니다. 개인 맞춤 조건·정렬·개인 기록은 제외하며, 받는 사람에게는 최근 공고순으로 표시됩니다.'
@@ -41,7 +42,7 @@ function openShare(data, trigger) {
   feedback('');
   if (!sheet.open) sheet.showModal();
   sheet.scrollTop = 0;
-  window.scrollTo({left:position.x, top:position.y, behavior:'instant'});
+  scrollApp({left:position.x, top:position.y, behavior:'instant'});
 }
 function closeShare() { if (sheet.open) sheet.close(); }
 sheet.addEventListener('cancel', event => { event.preventDefault(); event.stopPropagation(); closeShare(); });
@@ -49,7 +50,7 @@ sheet.addEventListener('close', () => {
   session++; current = null; setBusy(false);
   if (position) {
     if (parent?.open) parent.scrollTop = position.parentScroll;
-    window.scrollTo({left:position.x, top:position.y, behavior:'instant'});
+    scrollApp({left:position.x, top:position.y, behavior:'instant'});
   }
   if (opener?.isConnected) opener.focus({preventScroll:true});
   opener = null; position = null;

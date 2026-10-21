@@ -1,0 +1,48 @@
+/** SOFTM-ADFIT START 날짜:20261022 : 본문 뷰포트와 광고 행을 분리해 공고·메뉴를 가리지 않는다. */
+body.adfit-workspace {
+  --adfit-anchor-height:0px;
+  --adfit-nav-height:0px;
+  --adfit-sidebar-width:226px;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  padding-bottom:var(--adfit-nav-height);
+  overflow:hidden;
+}
+body.adfit-workspace > #app { flex:1 1 auto; min-height:0; width:100%; overflow:auto; overscroll-behavior-y:contain; scrollbar-gutter:stable; }
+body.adfit-workspace .sidebar { bottom:calc(var(--adfit-anchor-height) + var(--adfit-nav-height)); overflow-y:auto; }
+body.adfit-workspace .content { padding-bottom:110px; }
+body.adfit-workspace .compare-tray { bottom:calc(var(--adfit-anchor-height) + var(--adfit-nav-height) + 16px); }
+body.adfit-workspace #toast { bottom:calc(var(--adfit-anchor-height) + var(--adfit-nav-height) + 96px); }
+.adfit-anchor { flex:0 0 auto; padding-left:var(--adfit-sidebar-width); background:#fff; color:#536b60; border-top:1px solid #d7e5df; }
+.adfit-anchor[hidden],.adfit-anchor [hidden],.adfit-list[hidden],.adfit-list [hidden],.adfit-workspace #list[hidden] { display:none!important; }
+.adfit-anchor-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; width:min(100%,960px); min-height:40px; padding:0 16px; margin:auto; }
+.adfit-label { font-size:10px; line-height:1.5; font-weight:600; letter-spacing:.08em; color:#667b70; }
+.adfit-toggle { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; min-width:96px; border:0; background:transparent; color:#3b6351; font:inherit; font-size:12px; cursor:pointer; }
+.adfit-toggle::after { content:''; width:7px; height:7px; border:solid currentColor; border-width:0 1.5px 1.5px 0; transform:translateY(-2px) rotate(45deg); }
+.adfit-anchor[data-expanded="false"] .adfit-toggle::after { transform:translateY(2px) rotate(225deg); }
+.adfit-toggle:focus-visible { outline:3px solid #087d6b; outline-offset:-3px; border-radius:7px; }
+.adfit-anchor-panel { display:flex; align-items:center; justify-content:center; min-width:0; padding:8px 12px 12px; }
+.adfit-mount { flex:none; margin:0; padding:0; max-width:none; }
+.adfit-mount > ins { margin:0!important; }
+.adfit-mount iframe { display:block; border:0; }
+.adfit-list-group { display:contents; }
+.adfit-list { grid-column:1 / -1; display:flex; flex-direction:column; align-items:center; gap:9px; padding:14px 8px; margin:8px 0; background:#f3f7f5; border:1px solid #e0e9e4; border-radius:12px; }
+.adfit-preview { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; width:100%; height:100%; border:1px dashed #9db8aa; background:#f0f6f3; color:#597265; font-size:12px; }
+.adfit-preview strong { font-size:13px; font-weight:600; }
+.adfit-preview span { font-size:11px; }
+@media(max-width:640px) {
+  body.adfit-workspace { --adfit-sidebar-width:0px; }
+  body.adfit-workspace .content { padding-bottom:110px; }
+  .adfit-anchor-bar { min-height:40px; padding:0 14px; }
+  .adfit-anchor-panel { padding-top:8px; padding-bottom:10px; }
+  .adfit-list { margin-left:-14px; margin-right:-14px; }
+}
+@media print {
+  body.adfit-workspace { display:block; height:auto; overflow:visible; padding-bottom:0; }
+  body.adfit-workspace > #app { overflow:visible; height:auto; }
+  .adfit-anchor,.adfit-list { display:none!important; }
+}
+/** SOFTM-ADFIT END */

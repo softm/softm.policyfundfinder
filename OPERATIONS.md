@@ -56,3 +56,29 @@ GitHub 저장소에서 Pages Source가 브랜치 기반으로 설정되어 있�
 **영구 해결**: [Pages 설정](https://github.com/softm/softm.policyfundfinder/settings/pages) → Build and deployment → Source를 **GitHub Actions**로 지정합니다. 현재 커스텀 워크플로는 Push 배포 전에 동일 커밋의 Jekyll 자동 배포 완료를 기다리는 우회 보호장치를 추가했지만, 근본적으로 브랜치 기반 배포를 해제하는 것이 안전합니다. Actions만 사용하면 중복 Pages 실행이 사라집니다.
 
 수집 또는 소스 변경 후 [워크플로 현황](https://github.com/softm/softm.policyfundfinder/actions/workflows/pages.yml)에서 build/deploy가 성공했는지 확인하고, 운영 URL에서 /data/manifest.json이 HTTP 200인지와 필드 목록이 정상인지 확인합니다.
+
+## AdFit 광고 운영 (2026-10-22)
+
+광고 설정은 [`public/adfit-config.js`](public/adfit-config.js), 배치·운영 기준은 [docs/ADFIT.md](docs/ADFIT.md)에 보관합니다. [AdFit 광고관리](https://adfit.kakao.com/adManagement)에서 지원한눈 Web 매체의 URL이 `policyfundfinder.designboard.net`인지 확인하고 해당 매체에서 발급된 광고단위만 연결합니다.
+
+| 운영 항목 | 기준 |
+| --- | --- |
+| 하단 광고 | 모바일 320×50, PC 728×90 중 가용 폭에 맞는 1개. 접기·펼치기 버튼은 광고 영역 밖에 배치 |
+| 목록 광고 | 목록 6번째 공고 뒤 320×100 1개, 공고가 최소 7개일 때 표시 |
+| 요청 제한 | `enabled`, `allowedHosts`, 발급된 광고단위 ID를 확인. 미리보기·미허용 호스트·미발급 단위에서는 외부 광고 요청 없음 |
+| 반복 요청 | 검색·페이지 이동·접기·펼치기만으로 강제 새로고침하지 않음. 앱에서 자동 재요청 타이머를 추가하지 않음 |
+| 미송출 | 실패 콜백과 로드 오류를 처리해 빈 광고 공간을 정리. 무한 재시도하지 않음 |
+| 자료 처리 | 공고 수집, 검색, 개인 기록 보관 경로는 유지. 개인 프로필·관심사업·준비 메모를 광고 요청 필드에 넣지 않음 |
+
+설정과 UI 수정은 기존 Pages 빌드·배포를 사용합니다. 자료 재수집이 필요하지 않은 변경은 기존 검증된 수집 자료로 배포합니다.
+
+```sh
+npm run test:pages
+node scripts/build-pages.mjs
+```
+
+배포 후 [광고 미리보기](https://policyfundfinder.designboard.net/?adPreview=1)에서 모바일·PC 배치, 접기 상태 복원, 상세·뷰어·검색 입력과의 동작을 확인합니다. 일반 운영 URL에서는 실제 광고 스크립트·광고단위 연결을 확인합니다. 광고 소재를 클릭해서 검증하지 않습니다.
+
+**배포 완료, 광고 호출 확인, 매체 심사 승인, 실제 광고 송출은 각각 확인합니다.** AdFit은 발급된 광고단위를 설치하고 광고 호출이 발생한 뒤 매체 심사를 진행하므로, 미승인 상태만을 이유로 등록된 운영 도메인의 최초 호출을 막지 않습니다. 광고 미송출만으로 코드 배포 실패 또는 매체 승인 여부를 단정하지 않습니다.
+
+웹 광고 도입 고지는 `/privacy.html`, `/google-play-privacy-policy.html`과 이전 공개 경로에도 동일하게 반영합니다. Google Play Console의 광고 포함 여부·데이터 보안 답변은 이 저장소의 HTML 수정만으로 변경되지 않으므로, 실제 앱에서 운영 웹서비스를 표시하는 배포 범위와 맞는지 별도로 확인합니다.
