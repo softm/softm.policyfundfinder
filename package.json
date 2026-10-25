@@ -15,7 +15,7 @@
     "test": "node --test tests/*.test.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "collect:pages": "node scripts/collect-pages.mjs",
-    "test:pages": "node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs tests/sharing.test.mjs tests/classification.test.mjs tests/notice-text.test.mjs tests/adfit.test.mjs"
+    "test:pages": "node --check public/app.js && node --check public/sw.js && node --test --test-concurrency=1 tests/core.test.mjs tests/catalog.test.mjs tests/pages.test.mjs tests/sharing.test.mjs tests/classification.test.mjs tests/notice-text.test.mjs tests/adfit.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
