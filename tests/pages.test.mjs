@@ -168,3 +168,26 @@ test('reported Npay records are prioritized, then records without details',()=>{
   assert.deepEqual(prioritizeNpayDetails(rows,1).map(p=>p.externalId),['B']);
   assert.deepEqual(prioritizeNpayDetails(rows,0,['PRV_97_66082']),[]);
 });
+
+test('redesigned search keeps responsive controls, primary flows and cache files in sync',async()=>{
+  const [html,app,css,sw]=await Promise.all([
+    readFile(new URL('../index.html',import.meta.url),'utf8'),
+    readFile(new URL('../public/app.js',import.meta.url),'utf8'),
+    readFile(new URL('../public/redesign.css',import.meta.url),'utf8'),
+    readFile(new URL('../public/sw.js',import.meta.url),'utf8')
+  ]);
+  assert.match(html,/public\/redesign\.css/);
+  assert.match(app,/class="header-nav"/);
+  assert.match(app,/class="hero-search-box"/);
+  assert.match(app,/id="search-form"/);
+  assert.match(app,/class="discovery-grid"/);
+  assert.match(app,/id="filter-region"/);
+  assert.match(app,/id="filter-status"/);
+  assert.match(app,/id="metric-results"/);
+  assert.match(app,/action==='toggle-filters'/);
+  assert.match(app,/action==='compare-open'/);
+  assert.match(css,/\.mobile-filter-toggle/);
+  assert.match(css,/\.program-card/);
+  assert.match(css,/@media\(max-width:700px\)/);
+  assert.match(sw,/\.\/redesign\.css/);
+});
