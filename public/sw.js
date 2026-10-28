@@ -1,4 +1,4 @@
-const CACHE='policyfundfinder-pages-v13-redesign-20261026';
+const CACHE='policyfundfinder-pages-v13-redesign-20261026-suite-20261028';
 const ASSETS=['./','./index.html','./styles.css','./redesign.css','./adfit.css','./adfit.js','./adfit-config.js','./app.js','./core.js','./data.js','./data-client.js','./notice-view.js','./notice-text.js','./attachment-links.js','./tag-links.js','./dialog-layers.js','./search-controls.js','./sharing.js','./sharing-ui.js','./sharing.css','./static-client.js','./static-search.js','./search-worker.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
