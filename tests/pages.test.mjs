@@ -14,6 +14,20 @@ import {renderOverview} from '../public/notice-view.js';
 import {createDialogLayers} from '../public/dialog-layers.js';
 import {metricFilters,filterChips} from '../public/search-controls.js';
 const notice=(id,title,extra={})=>({id,title,fullTitle:title,category:'기술',subcategory:'장비지원',region:'충남',regions:['충남'],regionSoft:true,type:'지원사업',purpose:'기타',agency:'기관',summary:'스마트팜 장비',target:'농업인',published:'2026-10-01',start:null,end:'2026-10-20',sourceActive:true,sourceProvider:'npay',sourceUrl:'https://example.com/'+id,tags:[],industries:[],businessKinds:[],requirements:[],documents:[],attachments:[],checkedAt:'2026-10-12',imported:true,detailAvailable:true,...extra});
+test('Cloudflare account login boot leaves site data and old backups intact',async()=>{
+  const [html,app,docs]=await Promise.all([
+    readFile(new URL('../index.html',import.meta.url),'utf8'),
+    readFile(new URL('../public/app.js',import.meta.url),'utf8'),
+    readFile(new URL('../docs/COMMON-VAULT.md',import.meta.url),'utf8')
+  ]);
+  assert.match(html,/cloudflare-site-boot\\.mjs\\?site=policyfundfinder&amp;v=/);
+  assert.doesNotMatch(html,/shared\\/platform\\/v1\\/boot\\.mjs\\?site=policyfundfinder/);
+  assert.match(app,/const KEY='jiwonhannun-v1'/);
+  assert.match(app,/localStorage\\.setItem\\(KEY/);
+  assert.match(docs,/legacyAccount=1/);
+  assert.match(docs,/전용 Worker와 별도 D1/);
+});
+
 test('Pages entry point publishes search metadata and crawler discovery files',async()=>{
   const [html,redirect,robots,sitemap,google]=await Promise.all([
     readFile(new URL('../index.html',import.meta.url),'utf8'),
