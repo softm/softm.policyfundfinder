@@ -20,12 +20,12 @@ test('Cloudflare account login boot leaves site data and old backups intact',asy
     readFile(new URL('../public/app.js',import.meta.url),'utf8'),
     readFile(new URL('../docs/COMMON-VAULT.md',import.meta.url),'utf8')
   ]);
-  assert.match(html,/cloudflare-site-boot\\.mjs\\?site=policyfundfinder&amp;v=/);
-  assert.doesNotMatch(html,/shared\\/platform\\/v1\\/boot\\.mjs\\?site=policyfundfinder/);
-  assert.match(app,/const KEY='jiwonhannun-v1'/);
-  assert.match(app,/localStorage\\.setItem\\(KEY/);
-  assert.match(docs,/legacyAccount=1/);
-  assert.match(docs,/전용 Worker와 별도 D1/);
+  assert.ok(html.includes('cloudflare-site-boot.mjs?site=policyfundfinder&amp;v='));
+  assert.ok(!html.includes('shared/platform/v1/boot.mjs?site=policyfundfinder'));
+  assert.ok(app.includes("const KEY='jiwonhannun-v1'"));
+  assert.ok(app.includes('localStorage.setItem(KEY,'));
+  assert.ok(docs.includes('legacyAccount=1'));
+  assert.ok(docs.includes('전용 Worker와 별도 D1'));
 });
 
 test('Pages entry point publishes search metadata and crawler discovery files',async()=>{
